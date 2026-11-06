@@ -1,7 +1,8 @@
 ```
 AQUARIUM AUTOMATION (ESP32 IoT) - FULL PROJECT CONTEXT EXPORT
 Exported: 30 Oct 2026
-Updated:  30 Oct 2026 (software route changed to Home Assistant + ESPHome;
+Updated:  6 Nov 2026 (single feeder + food setting; owned servo);
+          30 Oct 2026 (software route changed to Home Assistant + ESPHome;
           manual button and relay choice decided)
 Purpose: hand this to a new Claude workspace so it can continue without re-asking settled questions.
 
@@ -50,6 +51,7 @@ A DIY IoT aquarium controller built on an ESP32. v1 scope:
   2. Automatic scheduled feeding
   3. Manual (on-demand) feeding
 Feeding must handle TWO food types: flakes, and a fine powder-like food.
+Only ONE food is used at a time (see 3.2).
 
 The fish and tank (what we know):
 - Small fish. They eat very little and can go days without food.
@@ -73,7 +75,23 @@ limits. A missed feed is harmless.
 - Rejected: ESP32-C3 (too few pins for future add-ons), ESP32-S3 (overkill
   unless adding a camera), ESP8266 (old, few usable pins).
 
-3.2 Feeder: TWO "pill-bottle drum" feeders, each on its own MG90S servo
+3.2 Feeder: ONE "pill-bottle drum" feeder on ONE servo (changed 6 Nov 2026)
+- The user does not want two separate feeders ("portals"). One container,
+  one servo. The user sets in Home Assistant which food is currently in
+  the container; the ESP32 stores both dispense routines (flakes = flip,
+  powder = shake) and uses the one matching that setting. Two foods are
+  never needed at the same time. Saves a servo, a capacitor and wiring.
+- Open physical question: flakes need a big slot, powder needs tiny holes,
+  and one bottle can't have both (powder would pour out of the slot).
+  PROPOSED (not yet confirmed by the user): two interchangeable bottles
+  that fit the same cap on the servo, one with a flakes slot, one with
+  powder holes. Changing food = screw on the other bottle, then change
+  the setting in HA.
+- Mismatch risk: if the setting says flakes but powder is loaded, the
+  flip motion would dump powder (overfeed). Mitigations: every feed
+  notification names the food; the current food is shown on the HA
+  dashboard; daily limits still apply.
+(Original plan, kept for history: two feeders, each on its own servo.)
 - Why: no 3D printing available; needs to handle flakes AND powder; fish
   need very little food, so rough powder portions are acceptable.
 - How the alternatives were ruled out:
@@ -90,9 +108,17 @@ limits. A missed feed is harmless.
     every 7-14 feeds. Kept as the FALLBACK if the powder drum turns out
     too inconsistent.
   * Two hoppers (auger + drum): too much build effort without printing.
-- Servo, not stepper: each bottle only needs to move within 180 degrees.
-  MUST be the 180-degree MG90S, NOT the "360 degree continuous rotation"
-  version (that one can't hold a position).
+- Servo, not stepper: the bottle only needs to move within 180 degrees.
+  MUST be a 180-degree (positional) servo, NOT the "360 degree continuous
+  rotation" version (that one can't hold a position).
+- The user ALREADY OWNS 180-degree servos (model SG90/MG90S and count not
+  yet confirmed). Tested by the user: goes to commanded angles, returns
+  correctly after being moved by hand while off, resists turning when
+  powered. But it can be turned a full 360 degrees by hand, so its end
+  stop is likely missing/broken. Normal use is fine; avoid turning it by
+  hand into the "blind zone" past the sensor's range, and hold the cap
+  while unscrewing the bottle. Suggested check: power on from several
+  hand-set positions and confirm it always returns smoothly.
 
 3.3 Filter switching: mechanical relay, filter wired through NO contact
 - Relay chosen over SSR: most SSRs are normally-open only, and SSRs leak
@@ -149,8 +175,8 @@ limits. A missed feed is harmless.
   via the app (no WhatsApp/Telegram needed).
 - ESPHome's built-in web_server can give the ESP32 its own fallback web
   page in case the laptop is down.
-- Settings (feed times, food per slot, fasting days, filter windows,
-  button food, limits) are exposed as HA entities and stored ON THE ESP32
+- Settings (feed times, food in container, fasting days, filter
+  windows, limits) are exposed as HA entities and stored ON THE ESP32
   (restore_value), so no app/platform limits apply.
 - History: Blynk was chosen first, then dropped because its free plan
   (~5 datastreams) can't hold the settings. Also considered: ESP RainMaker,
@@ -168,15 +194,14 @@ limits. A missed feed is harmless.
   month, from memory), Cloudflare Tunnel (needs a domain). Port
   forwarding not recommended (CGNAT common in India, less secure).
 
-3.7 Manual button: feeds the food type SELECTED IN THE APP (decided 30 Oct 2026)
-- The user rejected short/long press. Instead: a "button food" selector
-  in the app (flakes or powder). The physical button always feeds
-  whichever food is selected.
+3.7 "Food in container" setting drives ALL feeds (decided 30 Oct, updated 6 Nov 2026)
+- The user rejected short/long press. Instead: a "Food in container"
+  selector in Home Assistant (flakes or powder). Every feed (button,
+  app, schedule) uses the dispense routine for the selected food.
 - The selection STAYS until the user changes it manually. Store it in the
   ESP32's flash (ESPHome restore_value) so it survives reboots and works
   with no Wi-Fi/HA.
-- Reason given by the user: in practice only one food type will be in
-  use, so one fixed button choice is simpler.
+- Reason given by the user: only one food type is in use at a time.
 
 ======================================================================
 4. FINAL PARTS LIST (prices checked 29 Oct 2026)
@@ -186,14 +211,16 @@ BUY NOW
   1. ESP32 NodeMCU 30-pin (WROOM-32, CP2102) ........ x1  INR 425  Robocraze
   2. 1CH 5V relay board, High/Low level trigger,
      optocoupler (confirm 10A 250VAC, COM/NO/NC) ..... x1  INR 72   Robocraze
-  3. TowerPro MG90S servo, 180-degree ................ x2  INR 250  robu.in (125 each, "standard quality")
+  3. 180-degree servo ........................ x1  ALREADY OWNED (see 3.2)
   4. 5V 2A power adapter ............................. x1  INR 183  Robocraze
   5. PBS-11B 12mm panel push button (momentary) ...... x1  INR 19   Robocraze
-  6. 1000uF 25V electrolytic capacitor ............... x2  INR 18   Robocraze
+  6. 1000uF 25V electrolytic capacitor ............... x1  INR 9    Robocraze
   7. Jumper wires M-F 40pcs + F-F 40pcs .............. x1 each INR 87 Robocraze
-     SUBTOTAL ......................................................... INR 1,054
-     (shipping excluded; everything except the servos is now Robocraze,
-      so at most two shipping charges: Robocraze + robu.in)
+     SUBTOTAL ......................................................... INR 795
+     (shipping excluded; everything is from Robocraze = one shipping
+      charge. Capacitor price assumes INR 18 was for 2 pcs.)
+  If the owned servo turns out unusable: TowerPro MG90S 180-degree,
+  INR 125, robu.in ("standard quality").
 
 ADD LATER (optional, deferred to stay in budget)
   - DS3231 RTC module ............................ INR 234 Robocraze
@@ -227,8 +254,8 @@ HOUSEHOLD / FREE
     servo bracket
 
 COST VARIANTS
-  - Chosen (5V relay, no RTC): INR 1,054
-  - Chosen + RTC: INR 1,288
+  - Chosen (5V relay, owned servo, no RTC): INR 795
+  - Chosen + RTC: INR 1,029
   - If the 5V relay fails and the 3V module is bought as well: +INR 159
 
 PRICE NOTES / THINGS TO AVOID
@@ -245,10 +272,9 @@ PRICE NOTES / THINGS TO AVOID
 ======================================================================
 
   5V 2A adapter ---> ESP32 VIN
-                ---> Servo FLAKES (+1000uF cap)
-                ---> Servo POWDER (+1000uF cap)
+                ---> Feeder servo (+1000uF cap)
                 ---> Relay module VCC
-  ESP32 GPIOs ----> servo signals, relay IN; button into a GPIO
+  ESP32 GPIOs ----> servo signal, relay IN; button into a GPIO
 
   Wall plug Live ---------- Relay COM -> NO -- filter socket Live
   Wall plug Neutral ------------------------- filter socket Neutral
@@ -256,17 +282,17 @@ PRICE NOTES / THINGS TO AVOID
   (Relay NC unused)
 
   All low-voltage grounds tied together (adapter GND, ESP32 GND, servo
-  GNDs, relay GND).
+  GND, relay GND).
 
 ======================================================================
 6. PIN MAP (ESP32 NodeMCU 30-pin)
 ======================================================================
   GPIO 26 -> Relay IN. HIGH = filter on. 10k pull-down to GND.
              (not a strapping pin)
-  GPIO 18 -> Servo FLAKES signal (orange wire), 50 Hz PWM
-  GPIO 19 -> Servo POWDER signal (orange wire), 50 Hz PWM
+  GPIO 18 -> Feeder servo signal (orange wire), 50 Hz PWM
+  GPIO 19 -> Spare (was the second servo; free for a future add-on)
   GPIO 27 -> Manual feed button to GND (internal pull-up, software
-             debounce). Feeds the food selected in the app (section 3.7).
+             debounce). Feeds using the "Food in container" setting (3.7).
   GPIO 25 -> Spare button (optional, e.g. filter override)
   GPIO 2  -> Onboard status LED (on most of these boards; verify)
   GPIO 21 -> RTC SDA (reserved for later)
@@ -283,20 +309,19 @@ PRICE NOTES / THINGS TO AVOID
 ======================================================================
 
 LOW-VOLTAGE SIDE
-  - Adapter +5V -> ESP32 VIN, Servo FLAKES red, Servo POWDER red,
-    relay VCC
-  - Adapter GND -> ESP32 GND, both servo browns, relay GND
-  - One 1000uF capacitor across each servo's +5V/GND, close to the servo
-    connector (prevents brownout resets when servos start). Polarised:
+  - Adapter +5V -> ESP32 VIN, feeder servo red, relay VCC
+  - Adapter GND -> ESP32 GND, servo brown, relay GND
+  - One 1000uF capacitor across the servo's +5V/GND, close to the servo
+    connector (prevents brownout resets when the servo starts). Polarised:
     stripe side to GND.
-  - GPIO18 -> flakes servo orange; GPIO19 -> powder servo orange
+  - GPIO18 -> feeder servo orange
   - GPIO26 -> relay IN, plus 10k from GPIO26 to GND
   - Relay H/L jumper on H (high-level trigger)
   - GPIO27 -> button -> GND
-  - Servos NEVER powered from the ESP32's 3V3 pin.
+  - Servo NEVER powered from the ESP32's 3V3 pin.
   - When uploading over USB, unplug the 5V adapter unless the board is
     confirmed to protect against both being connected. (With the adapter
-    unplugged the relay and servos have no power; that's expected.)
+    unplugged the relay and servo have no power; that's expected.)
 
 MAINS SIDE
   - Switch only the LIVE wire, through relay COM -> NO. Neutral and earth
@@ -321,10 +346,14 @@ MAINS SIDE
 ======================================================================
 8. FEEDER MECHANICS (no 3D printing)
 ======================================================================
-- Each bottle lies horizontally, its axis in line with the servo shaft.
+- ONE feeder (see 3.2). The bottle lies horizontally, its axis in line
+  with the servo shaft.
 - The bottle's CAP is glued/screwed to the servo horn. The bottle screws
   into the cap, so refilling = unscrew bottle, fill, screw back. Nothing
-  to remount.
+  to remount. Hold the cap while unscrewing (the owned servo has no end
+  stop).
+- Proposed: two bottles that fit the same cap, one per food (below).
+  Swap the bottle when changing food, then update "Food in container".
 - Servo mounted on a simple bracket (wood/acrylic/plastic scrap) on the
   tank rim or lid, a few cm above the water.
 - FLAKES bottle: one side slot, start around 8 x 15 mm. At rest the slot
@@ -334,7 +363,7 @@ MAINS SIDE
   holes face UP. Feed = rotate holes down, rock about +/-25 degrees N
   times ("salt shaker"), rotate back up. Portion = number of shakes
   (configurable).
-- A funnel/chute under both bottles guides food into one spot, away from
+- A funnel/chute under the bottle guides food into one spot, away from
   the filter intake.
 - Calibration: run feeds over paper first and tune slot size / shake
   count. Start small.
@@ -351,7 +380,7 @@ MAINS SIDE
 
 NORMAL STATE
 - Filter follows its on/off timer (relay on = filter running).
-- Servos at rest, openings facing up.
+- Servo at rest, opening facing up.
 - LED shows Wi-Fi / time status.
 
 FILTER TIMER
@@ -364,24 +393,25 @@ FEED SEQUENCE (scheduled or manual)
   1. Check limits (cooldown, daily max). If blocked: do nothing, log it,
      blink LED.
   2. If the filter is running, turn it off. Wait ~3 s for flow to settle.
-  3. Dispense flakes (rotate-tip-return) and/or powder (N shakes).
+  3. Dispense using the routine for the "Food in container" setting:
+     flakes = rotate-tip-return, powder = N shakes.
   4. Keep the filter off for 10 min.
   5. Return the filter to whatever the timer says now. Log the feed.
 
 SCHEDULE
-- Feed times, each with a food choice (flakes or powder), e.g. 09:00
-  flakes, or alternating foods by day.
+- Feed times (e.g. 09:00). No per-slot food choice: every feed uses the
+  "Food in container" setting.
 - Fasting days: selectable weekdays with no scheduled feeding.
 - No valid time -> scheduled feeds are SKIPPED. Manual feeding still
   works. Safe because the fish can go days without food.
 
 MANUAL FEED (decided, section 3.7)
-- Physical button: one press = feed the food currently selected in the
-  app ("button food": flakes or powder). The selection is saved in flash
-  and stays until the user changes it in the app.
+- Physical button: one press = one feed, using the "Food in container"
+  setting (flakes or powder). The setting is saved in flash and stays
+  until the user changes it in the app.
 - Default before the user ever sets it: NOT YET DECIDED (ask; flakes is
   the obvious proposal).
-- App feed buttons (flakes, powder) work independently of the selector.
+- App "Feed now" button does the same.
 - Counts toward the same cooldown and daily limit.
 
 LIMITS
@@ -391,7 +421,7 @@ LIMITS
 FAILSAFES
 - NO relay wiring: controller dead/unpowered -> filter off (the tank's
   current normal).
-- Boot state: relay off (filter off) and servos to rest with openings up,
+- Boot state: relay off (filter off) and servo to rest with opening up,
   before anything else runs; then the timer takes over.
 - 10k pull-down keeps the relay off during boot/reset.
 - Watchdog: if firmware hangs, the ESP32 reboots into the safe state.
@@ -412,10 +442,10 @@ the user's old Dell notebook + HA companion app on the phone. Details and
 reasoning in section 3.6.
 
 HA entities to expose (no platform limits, unlike Blynk):
-  - Buttons: Feed flakes, Feed powder
+  - Button: Feed now
   - Switch: Filter override (returns to timer after 30 min)
-  - Select: Button food (flakes/powder), persistent on the ESP32
-  - Settings: feed times + food per slot, fasting weekdays, filter
+  - Select: Food in container (flakes/powder), persistent on the ESP32
+  - Settings: feed times, fasting weekdays, filter
     on/off windows, cooldown, max feeds/day, flake wiggle, powder shake
     count; all stored on the ESP32 (restore_value)
   - Status: filter state, last feed (time + food), feeds today, blocked
@@ -461,6 +491,16 @@ ANSWERED (30 Oct 2026)
   A: No. Make it a selectable option in the app that stays as set until
      changed manually, because only one food type will be in use. See 3.7.
 
+  Q (6 Nov): Two feeders/servos, or one?
+  A: One container, one servo. Tell it in Home Assistant what food is
+     inside; the ESP32 remembers how to dispense each type and picks the
+     right routine. No need for both foods at once. See 3.2 / 3.7.
+
+  Q (6 Nov): Why a 180-degree servo, not 360?
+  A (explained): 180 = positional, holds an angle; 360 = continuous
+     rotation, speed only, drifts. The user already owns 180-degree
+     servos that work positionally (details in 3.2).
+
   Q: Relay module: 3V (INR 159, recommended) or 5V (INR 72)?
   A: 5V module, INR 72. See 3.3.
 
@@ -498,7 +538,7 @@ NOT ANSWERED YET (ask the user; do not assume)
      A: -
   2. Filter on/off windows (times per day).
      A: -
-  3. Feed times and which food per slot; fasting days.
+  3. Feed times; fasting days.
      A: -
   4. Freshwater or saltwater? Tank size? (affects enclosure sealing and
      placement; salt creep corrodes electronics)
@@ -506,9 +546,10 @@ NOT ANSWERED YET (ask the user; do not assume)
   5. RTC now or later (currently deferred).
      A: -
   6. Which parts, if any, the user already owns.
-     A: -
-  7. Default "button food" before the user first sets it in the app
-     (proposed: flakes).
+     A: Partly: 180-degree servos (count and model SG90/MG90S not yet
+        confirmed). Anything else (breadboard, jumpers, adapter)?
+  7. Default "Food in container" before the user first sets it in the
+     app (proposed: flakes).
      A: -
   8. Remote access: Tailscale (proposed) or other.
      A: Later (see above).
@@ -518,6 +559,9 @@ NOT ANSWERED YET (ask the user; do not assume)
  10. Laptop Wi-Fi or a USB-to-Ethernet adapter?
      A: - (laptop can sit near the router, so either works)
  11. Is the user's 32 GB drive a USB pen drive or a microSD card?
+     A: -
+ 12. Single-feeder opening: two interchangeable bottles on one cap
+     (proposed), or another idea?
      A: -
 
 ======================================================================
@@ -560,7 +604,7 @@ The spare GPIOs and reserved I2C pins (21/22) leave room for these.
   3. Deliver the ESPHome config implementing section 9, with all logic on
      the ESP32, plus step-by-step HA OS install on the Dell laptop.
   4. Deliver a final wiring diagram + pin map matching sections 6-7.
-  5. Bench test on a breadboard WITHOUT mains: servos, button, relay
+  5. Bench test on a breadboard WITHOUT mains: servo, button, relay
      click/LED. Specifically confirm the 5V relay switches reliably from
      the ESP32's 3.3V signal. Calibrate portions over paper.
   6. Mains wiring in a closed box (or by an electrician), then install.
