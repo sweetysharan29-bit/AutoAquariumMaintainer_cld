@@ -227,54 +227,78 @@ limits. A missed feed is harmless.
 - Reason given by the user: only one food type is in use at a time.
 
 ======================================================================
-4. FINAL PARTS LIST (prices checked 29 Oct 2026)
+4. FINAL PARTS LIST (final shopping list, 6 Nov 2026; prices from 29 Oct)
 ======================================================================
+The user is buying from this list. No more big design changes.
+Prices could not be re-checked on 6 Nov (shop sites blocked from the
+Claude session); the user checks price/stock at checkout.
 
-BUY NOW
-  1. ESP32 NodeMCU 30-pin (WROOM-32, CP2102) ........ x1  INR 425  Robocraze
+A. ROBOCRAZE (one order, one shipping charge)
+  1. ESP32 NodeMCU 30-pin (WROOM-32, CP2102) ........ x1  INR 425
   2. 1CH 5V relay board, High/Low level trigger,
-     optocoupler (confirm 10A 250VAC, COM/NO/NC) ..... x1  INR 72   Robocraze
-  3. 180-degree servo ........................ x1  ALREADY OWNED (see 3.2)
-  4. 5V 2A power adapter ............................. x1  INR 183  Robocraze
-  5. PBS-11B 12mm panel push button (momentary) ...... x1  INR 19   Robocraze
-  6. 1000uF 25V electrolytic capacitor ............... x1  INR 9    Robocraze
-  7. Jumper wires M-F 40pcs + F-F 40pcs .............. x1 each INR 87 Robocraze
-     SUBTOTAL ......................................................... INR 795
-     (shipping excluded; everything is from Robocraze = one shipping
-      charge. Capacitor price assumes INR 18 was for 2 pcs.)
-  If the owned servo turns out unusable: TowerPro MG90S 180-degree,
-  INR 125, robu.in ("standard quality").
+     optocoupler (confirm 10A 250VAC, COM/NO/NC) ..... x1  INR 72
+  3. 5V 2A power adapter (barrel plug, usually
+     5.5 x 2.1 mm) ................................... x1  INR 183
+  4. PBS-11B 12mm panel push button (momentary) ...... x1  INR 19
+  5. 1000uF 25V electrolytic capacitor ............... x1  INR 9 (buy 2 for a spare)
+  6. Jumper wires M-F 40pcs + F-F 40pcs .............. x1 each INR 87
+     PRICED SUBTOTAL .................................................. INR 795
+  Same order, not priced (cheap):
+  7. Breadboard, full size (830 points) .............. x1
+  8. Jumper wires M-M 40pcs .......................... x1
+  9. 10k ohm resistors ............................... a few
+ 10. DC barrel jack (female) to screw-terminal adapter,
+     matching the adapter's plug (usually 5.5 x 2.1 mm) x1
+ 11. USB data cable for the ESP32 (check the board's port: micro-USB
+     or USB-C). Skip if owned; it must be a DATA cable, not
+     charge-only.
 
-ADD LATER (optional, deferred to stay in budget)
-  - DS3231 RTC module ............................ INR 234 Robocraze
-    (keeps schedules running without Wi-Fi/NTP. Deferred because the fish
-     can skip a feed.)
-  - LIR2032 rechargeable coin cell, not priced (most DS3231 modules try
-    to charge the cell, so a plain CR2032 is not suitable unless the
-    charging resistor is removed)
-  - 3V/3.3V-trigger relay module, INR 159 Amazon.in: ONLY if the 5V
-    module fails the bench test (section 3.3).
+B. ALREADY OWNED
+  - 180-degree servo (see 3.2). Backup if unusable: TowerPro MG90S
+    180-degree, INR 125, robu.in ("standard quality").
+  - 32 GB drive (HA installer if it is a USB pen drive).
+  - Old Dell laptop (Home Assistant server).
 
-STILL NEEDED, NOT PRICED
-  - Mains side: 3-pin plug, 3-core cable, a socket for the filter, small
-    junction box (no inline fuse: the user's decision, see section 7)
-  - Enclosure for the electronics (an electrical-shop junction box works)
-  - DC barrel jack to screw-terminal adapter (to connect the 5V adapter)
-  - Breadboard for testing (if the user doesn't have one)
-  - 10k ohm resistor (relay pull-down), a few rupees
-  - The FILTER itself (the user doesn't own one yet)
-  - USB-to-Ethernet adapter (Realtek RTL8153) + short LAN cable for the
-    HA laptop (recommended; optional if laptop Wi-Fi works with HA OS)
-  - USB pen drive, 8 GB+, for the HA OS install (the user's 32 GB drive
-    works if it is a pen drive)
+C. ELECTRICAL SHOP (mains side; generic, suits any small aquarium filter)
+  - 3-pin plug (6A) ................................. x1
+  - 3-core flexible cable, 0.75 mm2, ~1-2 m ......... x1
+  - 3-pin socket (6A) for the filter ................ x1
+  - PVC junction box for the mains side ............. x1
+  - PVC junction box / enclosure for the electronics  x1
+  - Optional: plug-in RCD adapter, if the home has no RCD/ELCB
+  - No inline fuse (the user's decision, section 7)
 
-HOUSEHOLD / FREE
-  - 1 small screw-cap plastic bottle (pill bottle / small spice jar)
-    plus a SECOND matching cap (e.g. from an identical bottle)
+D. AQUARIUM SHOP (filter; recommended type, see 3.3)
+  - Sponge filter sized for the tank (tank size still unknown)
+  - Small air pump (a few watts, 230V; confirm watts on the label)
+  - Airline tubing (length to reach from the pump to the tank)
+  - Check valve (non-return valve) for the airline
+  - If a different filter is chosen instead: it must restart by itself
+    after power-off and draw well under 10A (section 3.3).
+
+E. FEEDER (home / hardware shop)
+  - 2 identical small screw-cap bottles (pill bottle / spice jar):
+    one is the feeder, the second supplies the SECOND CAP
+  - Two-part epoxy + a piece of sandpaper
+  - 1-2 small screws (to fix the bottle bottom to the servo horn)
   - Small funnel or cut-off top of a plastic bottle (food chute)
   - Silica gel sachets
-  - Screws / double-sided foam tape, scrap wood/acrylic/plastic for a
+  - Scrap wood/acrylic/plastic + screws or double-sided foam tape for the
     servo bracket
+  - Tools: small screwdriver, craft knife or small drill (flakes slot),
+    needle heated over a flame (powder holes)
+
+F. HOME ASSISTANT LAPTOP (only if needed)
+  - USB-to-Ethernet adapter (Realtek RTL8153) + short LAN cable: only if
+    the laptop's Wi-Fi doesn't work with HA OS (send laptop model first)
+  - USB pen drive 8 GB+: only if the 32 GB drive is a microSD card
+
+G. NOT NOW (optional later)
+  - DS3231 RTC module, INR 234 Robocraze (+ LIR2032 rechargeable cell;
+    most DS3231 modules try to charge the cell, so a plain CR2032 is not
+    suitable unless the charging resistor is removed)
+  - 3V/3.3V-trigger relay, INR 159 Amazon.in: ONLY if the 5V module fails
+    the bench test (section 3.3)
 
 COST VARIANTS
   - Chosen (5V relay, owned servo, no RTC): INR 795
@@ -654,7 +678,8 @@ The spare GPIOs and reserved I2C pins (21/22) leave room for these.
 ======================================================================
 - Status: hardware and feature design agreed; software route (Home
   Assistant + ESPHome), button behaviour and relay module decided; parts
-  list ready; nothing purchased; no code; HA not installed yet.
+  list FINAL (section 4); the user is buying parts (6 Nov 2026); no
+  code; HA not installed yet.
 - Next steps:
   1. Settle the NOT ANSWERED YET items in section 11.
   2. User buys parts (re-check prices/stock; 180-degree MG90S only).
