@@ -81,16 +81,17 @@ limits. A missed feed is harmless.
   the container; the ESP32 stores both dispense routines (flakes = flip,
   powder = shake) and uses the one matching that setting. Two foods are
   never needed at the same time. Saves a servo, a capacitor and wiring.
-- Open physical question: flakes need a big slot, powder needs tiny holes,
-  and one bottle can't have both (powder would pour out of the slot).
-  PROPOSED (not yet confirmed by the user): two interchangeable bottles
-  that fit the same cap on the servo, one with a flakes slot, one with
-  powder holes. Changing food = screw on the other bottle, then change
-  the setting in HA.
-- Mismatch risk: if the setting says flakes but powder is loaded, the
-  flip motion would dump powder (overfeed). Mitigations: every feed
-  notification names the food; the current food is shown on the HA
-  dashboard; daily limits still apply.
+- ONE BOTTLE, TWO SWAPPABLE CAPS (the user's design, decided 6 Nov 2026):
+  the bottle's bottom is permanently fixed to the servo horn; the
+  dispensing opening is in the CAP. Two caps: a flakes cap (slot) and a
+  powder cap (pinholes). The user screws on the matching cap and sets
+  "Food in container" in HA. (Replaces my earlier idea of two bottles
+  sharing one cap.) Details in section 8.
+- Mismatch risk (cap/food vs setting): flakes motion with the powder cap
+  = tiny feed, harmless. Powder shake with the flakes cap, or powder in
+  the bottle with the flakes cap on = more food than intended (overfeed).
+  Mitigations: every feed notification names the food; the current
+  setting is shown on the HA dashboard; daily limits still apply.
 (Original plan, kept for history: two feeders, each on its own servo.)
 - Why: no 3D printing available; needs to handle flakes AND powder; fish
   need very little food, so rough powder portions are acceptable.
@@ -246,8 +247,8 @@ STILL NEEDED, NOT PRICED
     works if it is a pen drive)
 
 HOUSEHOLD / FREE
-  - 2 small screw-cap plastic bottles (pill bottles, film canisters,
-    small spice jars)
+  - 1 small screw-cap plastic bottle (pill bottle / small spice jar)
+    plus a SECOND matching cap (e.g. from an identical bottle)
   - Small funnel or cut-off top of a plastic bottle (food chute)
   - Silica gel sachets
   - Screws / double-sided foam tape, scrap wood/acrylic/plastic for a
@@ -346,21 +347,32 @@ MAINS SIDE
 ======================================================================
 8. FEEDER MECHANICS (no 3D printing)
 ======================================================================
-- ONE feeder (see 3.2). The bottle lies horizontally, its axis in line
-  with the servo shaft.
-- The bottle's CAP is glued/screwed to the servo horn. The bottle screws
-  into the cap, so refilling = unscrew bottle, fill, screw back. Nothing
-  to remount. Hold the cap while unscrewing (the owned servo has no end
-  stop).
-- Proposed: two bottles that fit the same cap, one per food (below).
-  Swap the bottle when changing food, then update "Food in container".
+- ONE feeder, ONE bottle, TWO swappable caps (see 3.2). The bottle lies
+  horizontally, its axis in line with the servo shaft.
+- The bottle's BOTTOM is fixed to the servo HORN (arm), not to the servo
+  body. The horn comes off with its one screw, so the bottle can still be
+  removed for cleaning or a servo swap.
+- Fixing: many pill bottles are PP/PE plastic, which superglue and even
+  epoxy grip poorly. Roughen both surfaces, use epoxy, and preferably add
+  1-2 small screws through the horn's holes into the bottle bottom.
+- The dispensing opening is in the CAP, at the free end. Because the
+  bottle spins about its own axis, an opening in the CENTRE of the cap
+  would never point down. Openings must be NEAR THE EDGE of the cap's
+  face or on its side rim, all on one side. A wider cap (spice-jar lid)
+  gives more room.
+- Optional: tilt the axis 10-15 degrees with the cap end lower, so food
+  slides toward the openings (servo bracket mounted at an angle).
+- Refill / change food: hold the BOTTLE (not the cap alone) while
+  unscrewing, so the twist doesn't go into the servo (the owned servo has
+  no end stop). Unscrew cap, refill, screw on the matching cap, then set
+  "Food in container" in HA.
 - Servo mounted on a simple bracket (wood/acrylic/plastic scrap) on the
   tank rim or lid, a few cm above the water.
-- FLAKES bottle: one side slot, start around 8 x 15 mm. At rest the slot
-  faces UP. Feed = rotate ~180 degrees (slot down), small wiggle to shake
+- FLAKES cap: one slot/notch near the edge, start around 8 x 15 mm. At
+  rest the slot faces UP. Feed = rotate ~180 degrees (slot down), small wiggle to shake
   loose, rotate back up. Portion set by slot size.
-- POWDER bottle: 2-4 small holes about 1-1.5 mm (heated needle). At rest
-  holes face UP. Feed = rotate holes down, rock about +/-25 degrees N
+- POWDER cap: 2-4 small holes about 1-1.5 mm (heated needle), near the
+  edge, on the same side. At rest holes face UP. Feed = rotate holes down, rock about +/-25 degrees N
   times ("salt shaker"), rotate back up. Portion = number of shakes
   (configurable).
 - A funnel/chute under the bottle guides food into one spot, away from
@@ -368,7 +380,7 @@ MAINS SIDE
 - Calibration: run feeds over paper first and tune slot size / shake
   count. Start small.
 - Humidity: tight caps; silica gel in the feeder housing, NOT loose in the
-  bottles (it could fall into the tank). Keep the lid opening under the
+  bottle (it could fall into the tank). Keep the lid opening under the
   funnel small to limit rising moisture.
 - Electronics box sits beside the tank, not over it.
 - Powder portions won't be precise; the user accepted this because the
@@ -562,7 +574,9 @@ NOT ANSWERED YET (ask the user; do not assume)
      A: -
  12. Single-feeder opening: two interchangeable bottles on one cap
      (proposed), or another idea?
-     A: -
+     A (6 Nov): The user's own idea, adopted: one bottle permanently
+        fixed to the servo arm, two swappable caps (flakes slot / powder
+        holes); put on the matching cap and select it in HA. See 3.2/8.
 
 ======================================================================
 12. FUTURE IDEAS (out of scope for v1)
