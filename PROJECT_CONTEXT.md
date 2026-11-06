@@ -47,7 +47,7 @@ Purpose: hand this to a new Claude workspace so it can continue without re-askin
 2. GOAL AND v1 SCOPE
 ======================================================================
 A DIY IoT aquarium controller built on an ESP32. v1 scope:
-  1. Filter on/off on a timer, through a single relay
+  1. Filter: a few SHORT scheduled runs per day, through a single relay
   2. Automatic scheduled feeding
   3. Manual (on-demand) feeding
 Feeding must handle TWO food types: flakes, and a fine powder-like food.
@@ -148,14 +148,36 @@ limits. A missed feed is harmless.
   relay stays off during boot/reset before firmware drives the pin.
 - Relay coil draws current from the 5V adapter the whole time the filter
   is on; that's normal and well within the 2A adapter.
-- Filter behaviour = timer-based on/off windows (the user's original
-  request), plus automatic off during feeding.
+- Filter behaviour (updated 6 Nov 2026): SHORT scheduled runs only,
+  plus automatic off during feeding. The user: long runs are something
+  they can do manually (e.g. plugging the filter in directly), so the
+  controller doesn't need to do them. Run times can be any time of day.
+  Details in section 9 (FILTER RUNS).
+- The relay is a generic switched socket for WHATEVER filter the user
+  ends up buying. Requirements for that filter:
+  * Draws well under the relay's 10A rating (typical aquarium filters /
+    air pumps are a few watts to ~25 W, i.e. well under 1A at 230V).
+    Confirm from its label.
+  * Restarts by itself after power-off. Most air pumps and internal
+    submersible filters do; some hang-on-back and canister filters lose
+    their prime and need manual restarting. Avoid those, given the
+    frequent on/off.
+  * Air-pump type (sponge filter): fit a CHECK VALVE on the air line
+    (or keep the pump above water level), so water can't siphon back
+    into the pump every time the relay switches it off.
+- Filter type the user is considering (6 Nov): one that "sucks in air
+  and recirculates water through a filter". Could be a sponge filter +
+  air pump (recommended: gentle flow for small fish, electrics stay out
+  of the water, low power) or an internal power filter with an air
+  intake (stronger flow, motor in the water). Not bought yet.
 - User was told (and accepted) the caveat: water sitting in a filter
   while it's off goes stale and is pushed into the tank on restart.
-  Several shorter on-windows per day are gentler than one long one;
-  rinsing the filter at monthly water changes helps. Low risk here
-  because the filter is mainly for circulation, not the tank's
-  biological filtration.
+  Several shorter runs per day are gentler than one long one; rinsing
+  the filter at monthly water changes helps. Low risk here because the
+  filter is mainly for circulation, not the tank's biological
+  filtration. With short runs, the sponge's helpful bacteria won't
+  establish much; accepted, since the tank already does fine with no
+  filter.
 
 3.4 Logic lives on the ESP32
 - Whatever app/cloud is used, all schedules, the filter timer, cooldowns,
@@ -177,7 +199,7 @@ limits. A missed feed is harmless.
 - ESPHome's built-in web_server can give the ESP32 its own fallback web
   page in case the laptop is down.
 - Settings (feed times, food in container, fasting days, filter
-  windows, limits) are exposed as HA entities and stored ON THE ESP32
+  run times + run length, limits) are exposed as HA entities and stored ON THE ESP32
   (restore_value), so no app/platform limits apply.
 - History: Blynk was chosen first, then dropped because its free plan
   (~5 datastreams) can't hold the settings. Also considered: ESP RainMaker,
@@ -294,7 +316,7 @@ PRICE NOTES / THINGS TO AVOID
   GPIO 19 -> Spare (was the second servo; free for a future add-on)
   GPIO 27 -> Manual feed button to GND (internal pull-up, software
              debounce). Feeds using the "Food in container" setting (3.7).
-  GPIO 25 -> Spare button (optional, e.g. filter override)
+  GPIO 25 -> Spare button (optional, e.g. "run filter now")
   GPIO 2  -> Onboard status LED (on most of these boards; verify)
   GPIO 21 -> RTC SDA (reserved for later)
   GPIO 22 -> RTC SCL (reserved for later)
@@ -395,11 +417,22 @@ NORMAL STATE
 - Servo at rest, opening facing up.
 - LED shows Wi-Fi / time status.
 
-FILTER TIMER
-- Daily on/off windows (e.g. 08:00-12:00 and 18:00-22:00; real times TBD).
-- Manual on/off override from the app (or spare button), returning to the
-  timer after 30 min.
-- No valid time (no Wi-Fi/NTP, no RTC) -> filter stays OFF.
+FILTER RUNS (updated 6 Nov 2026: short runs only)
+- Up to 4 scheduled runs per day, each with its own start time (any time
+  of day) and a shared run length. Each run slot can be enabled/disabled.
+  PROPOSED DEFAULTS (not confirmed; changeable in HA): 3 runs of 15 min
+  at 07:00, 13:00 and 19:00.
+- Hard cap on run length: 30 min (PROPOSED). The run-length setting can't
+  go above it, so the controller never does long runs. Long runs are done
+  manually by the user (e.g. plugging the filter in directly).
+- "Run filter now" button in the app (and optionally the spare button):
+  one run of the normal run length, then off. Pressing it again during a
+  run restarts the countdown, still capped.
+- "Stop filter" button: ends the current run early.
+- No valid time (no Wi-Fi/NTP, no RTC) -> scheduled runs are skipped,
+  filter stays OFF. "Run filter now" still works (it only needs a
+  countdown, not the clock).
+- Reboot / power cut during a run -> filter stays OFF (no resume).
 
 FEED SEQUENCE (scheduled or manual)
   1. Check limits (cooldown, daily max). If blocked: do nothing, log it,
@@ -408,7 +441,9 @@ FEED SEQUENCE (scheduled or manual)
   3. Dispense using the routine for the "Food in container" setting:
      flakes = rotate-tip-return, powder = N shakes.
   4. Keep the filter off for 10 min.
-  5. Return the filter to whatever the timer says now. Log the feed.
+  5. Log the feed. If a filter run was in progress or became due during
+     the hold, it resumes for whatever is left of that run (it does NOT
+     get extended).
 
 SCHEDULE
 - Feed times (e.g. 09:00). No per-slot food choice: every feed uses the
@@ -455,11 +490,12 @@ reasoning in section 3.6.
 
 HA entities to expose (no platform limits, unlike Blynk):
   - Button: Feed now
-  - Switch: Filter override (returns to timer after 30 min)
+  - Buttons: Run filter now, Stop filter
   - Select: Food in container (flakes/powder), persistent on the ESP32
-  - Settings: feed times, fasting weekdays, filter
-    on/off windows, cooldown, max feeds/day, flake wiggle, powder shake
-    count; all stored on the ESP32 (restore_value)
+  - Settings: feed times, fasting weekdays, filter run start times (up
+    to 4, each enable/disable) + run length (capped at 30 min),
+    cooldown, max feeds/day, flake wiggle, powder shake count; all
+    stored on the ESP32 (restore_value)
   - Status: filter state, last feed (time + food), feeds today, blocked
     reason, time-valid flag
   - Calibration mode switch (dispense without counting toward limits)
@@ -547,9 +583,16 @@ ANSWERED (30 Oct 2026)
 NOT ANSWERED YET (ask the user; do not assume)
   1. Which filter to buy (sponge / internal / hang-on-back), its
      wattage/amps, and mains voltage (confirms the relay is suitable).
-     A: -
-  2. Filter on/off windows (times per day).
-     A: -
+     A (6 Nov): Not bought yet. Considering one that "sucks in air and
+        recirculates water through a filter" (sponge + air pump, or
+        internal filter with air intake). Relay is designed as a
+        generic switched socket for whatever is chosen. Still need: link
+        or model, watts/voltage, tank size.
+  2. Filter run times (times per day).
+     A (6 Nov): Short runs only, any time of day; the user does long runs
+        manually. Exact times/length not given: proposed defaults are 3 x
+        15 min at 07:00, 13:00, 19:00, capped at 30 min. Confirm or
+        change (also changeable later in HA).
   3. Feed times; fasting days.
      A: -
   4. Freshwater or saltwater? Tank size? (affects enclosure sealing and
