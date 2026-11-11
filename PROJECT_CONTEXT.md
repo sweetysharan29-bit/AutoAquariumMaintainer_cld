@@ -57,7 +57,7 @@ The fish and tank (what we know):
 - Small fish. They eat very little and can go days without food.
 - The tank currently has NO filter and is doing fine. Water is changed
   about once a month.
-- Freshwater vs saltwater: UNKNOWN. Tank size: UNKNOWN.
+- FRESHWATER (confirmed 11 Nov 2026). Tank size: UNKNOWN.
 
 Key consequence: overfeeding, not underfeeding, is the real risk. Uneaten
 food rots and produces ammonia. Portions should be small, with strict
@@ -441,11 +441,14 @@ NORMAL STATE
 - Servo at rest, opening facing up.
 - LED shows Wi-Fi / time status.
 
-FILTER RUNS (updated 6 Nov 2026: short runs only)
-- Up to 4 scheduled runs per day, each with its own start time (any time
-  of day) and a shared run length. Each run slot can be enabled/disabled.
-  PROPOSED DEFAULTS (not confirmed; changeable in HA): 3 runs of 15 min
-  at 07:00, 13:00 and 19:00.
+FILTER RUNS (updated 11 Nov 2026: short runs, evenly spaced)
+- "Runs per day" setting, 1-10. Runs are spread EVENLY over 24 h, starting
+  from a "first run at" time. Every run has the same length.
+  USER'S SETTINGS (11 Nov 2026): 10 runs/day, 15 min each, i.e. one run
+  every 2 h 24 min, 2.5 h total per day. With "first run at" = 00:00
+  (default): 00:00, 02:24, 04:48, 07:12, 09:36, 12:00, 14:24, 16:48,
+  19:12, 21:36. The 09:00 feed (filter off until ~09:10) does not
+  overlap the 09:36 run.
 - Hard cap on run length: 30 min (PROPOSED). The run-length setting can't
   go above it, so the controller never does long runs. Long runs are done
   manually by the user (e.g. plugging the filter in directly).
@@ -470,9 +473,11 @@ FEED SEQUENCE (scheduled or manual)
      get extended).
 
 SCHEDULE
-- Feed times (e.g. 09:00). No per-slot food choice: every feed uses the
-  "Food in container" setting.
-- Fasting days: selectable weekdays with no scheduled feeding.
+- Feed times. USER'S SETTING (11 Nov 2026): one feed EVERY DAY at 09:00.
+  No per-slot food choice: every feed uses the "Food in container"
+  setting.
+- Fasting days: selectable weekdays with no scheduled feeding. USER'S
+  SETTING: none (feed all days).
 - No valid time -> scheduled feeds are SKIPPED. Manual feeding still
   works. Safe because the fish can go days without food.
 
@@ -516,8 +521,8 @@ HA entities to expose (no platform limits, unlike Blynk):
   - Button: Feed now
   - Buttons: Run filter now, Stop filter
   - Select: Food in container (flakes/powder), persistent on the ESP32
-  - Settings: feed times, fasting weekdays, filter run start times (up
-    to 4, each enable/disable) + run length (capped at 30 min),
+  - Settings: feed times, fasting weekdays, filter runs per day (1-10),
+    first run at (time), run length (capped at 30 min),
     cooldown, max feeds/day, flake wiggle, powder shake count; all
     stored on the ESP32 (restore_value)
   - Status: filter state, last feed (time + food), feeds today, blocked
@@ -614,14 +619,14 @@ NOT ANSWERED YET (ask the user; do not assume)
         or model, watts/voltage, tank size.
   2. Filter run times (times per day).
      A (6 Nov): Short runs only, any time of day; the user does long runs
-        manually. Exact times/length not given: proposed defaults are 3 x
-        15 min at 07:00, 13:00, 19:00, capped at 30 min. Confirm or
-        change (also changeable later in HA).
+        manually.
+     A (11 Nov): Up to 10 runs a day, split evenly, 15 min each. Set as
+        10 x 15 min, evenly spaced from 00:00 (every 2 h 24 min). See 9.
   3. Feed times; fasting days.
-     A: -
+     A (11 Nov): Feed every day at 09:00. No fasting days.
   4. Freshwater or saltwater? Tank size? (affects enclosure sealing and
      placement; salt creep corrodes electronics)
-     A: -
+     A (11 Nov): Freshwater. Tank size: still unknown.
   5. RTC now or later (currently deferred).
      A: -
   6. Which parts, if any, the user already owns.

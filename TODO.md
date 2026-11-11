@@ -51,11 +51,11 @@ Prices are from 29 Oct 2026; check price and stock at checkout.
 ### Step 1: Now, while the parts ship
 - [ ] Place the orders (check prices and stock at checkout)
 - [ ] Send Claude the missing answers:
-  - [ ] Tank size, and freshwater or saltwater?
-  - [ ] Feed times, and any days with no feeding?
+  - [ ] Tank size (freshwater ✅)
+  - [x] Feed times: every day at 09:00, no fasting days
   - [ ] Laptop model (sticker underneath)
   - [ ] Is the 32 GB drive a pen drive or a microSD card?
-  - [ ] Filter runs: is 3 × 15 min at 07:00, 13:00, 19:00 okay?
+  - [x] Filter runs: 10 a day × 15 min, evenly spaced (every 2 h 24 min)
 - [ ] Build the feeder (the servo is already here):
   - [ ] Cap 1: cut an 8×15 mm slot near the **edge**
   - [ ] Cap 2: 2–4 pinholes of 1–1.5 mm near the edge (heated needle)
