@@ -680,6 +680,7 @@ The spare GPIOs and reserved I2C pins (21/22) leave room for these.
   Assistant + ESPHome), button behaviour and relay module decided; parts
   list FINAL (section 4); the user is buying parts (6 Nov 2026); no
   code; HA not installed yet.
+- Step-by-step checklist (buy + do): TODO.md in the repo root.
 - Next steps:
   1. Settle the NOT ANSWERED YET items in section 11.
   2. User buys parts (re-check prices/stock; 180-degree MG90S only).
